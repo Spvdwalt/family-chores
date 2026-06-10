@@ -172,6 +172,7 @@ async function openChild(childId) {
   currentChild = state.children.find(c => c.id === childId);
   if (!currentChild) return;
   $('#chores-title').textContent = `${currentChild.emoji} ${currentChild.name}'s chores`;
+  $('#btn-avatar').textContent = currentChild.emoji;
   const { chores } = await api('GET', `/api/chores?childId=${childId}`);
 
   if (chores.length === 0) {
@@ -229,6 +230,42 @@ function tryComplete(choreId) {
     },
   });
 }
+
+// ---------- child avatar picker ----------
+
+$('#btn-avatar').addEventListener('click', () => {
+  if (!currentChild) return;
+  $('#avatar-grid').innerHTML = AVATARS.map(a =>
+    `<button type="button" data-pick="${a}" class="${currentChild.emoji === a ? 'selected' : ''}">${a}</button>`).join('');
+  $$('#avatar-grid [data-pick]').forEach(b => b.addEventListener('click', () => {
+    const chosen = b.dataset.pick;
+    $('#avatar-overlay').classList.add('hidden');
+    if (chosen === currentChild.emoji) return;
+    pinPad.open({
+      title: `${currentChild.name}, enter your secret code`,
+      avatar: chosen,
+      digits: 4,
+      handler: async pin => {
+        try {
+          await api('POST', '/api/child/avatar', { childId: currentChild.id, pin, emoji: chosen });
+          currentChild.emoji = chosen;
+          $('#chores-title').textContent = `${currentChild.emoji} ${currentChild.name}'s chores`;
+          $('#btn-avatar').textContent = currentChild.emoji;
+          $('#pin-avatar').textContent = currentChild.emoji;
+          toast(`Looking good, ${currentChild.name}! ${chosen}`, 'success');
+          state = await api('GET', '/api/state');
+          return true;
+        } catch (err) {
+          if (err.code === 'wrong-pin') return false;
+          toast(err.message, 'error');
+          return true;
+        }
+      },
+    });
+  }));
+  $('#avatar-overlay').classList.remove('hidden');
+});
+$('#avatar-cancel').addEventListener('click', () => $('#avatar-overlay').classList.add('hidden'));
 
 // ---------- admin ----------
 

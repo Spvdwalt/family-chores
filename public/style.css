@@ -220,6 +220,19 @@ body {
 .idea-item .idea-value { font-weight: 800; color: var(--green); font-size: 0.9rem; }
 .idea-item .idea-freq { color: var(--ink-soft); font-size: 0.75rem; }
 
+/* child avatar picker */
+.avatar-card { padding: 24px 22px; text-align: center; width: 340px; }
+.avatar-card h2 { font-size: 1.15rem; margin-bottom: 16px; }
+.avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+.avatar-grid button {
+  border: 2px solid transparent; background: #f3f4f9; font-size: 1.7rem; border-radius: 16px;
+  aspect-ratio: 1; cursor: pointer; transition: transform 0.1s;
+}
+.avatar-grid button:active { transform: scale(0.9); }
+.avatar-grid button.selected { border-color: var(--accent); background: #efeefe; }
+.avatar-card .ghost-btn { width: 100%; }
+#btn-avatar { font-size: 1.6rem; }
+
 /* avatar picker */
 .avatar-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 14px; }
 .avatar-row button {

@@ -26,7 +26,7 @@
     <header class="app-header">
       <button class="icon-btn btn-back" title="Back">‹</button>
       <h1 id="chores-title"></h1>
-      <span class="header-spacer"></span>
+      <button id="btn-avatar" class="icon-btn" title="Change my look"></button>
     </header>
     <div id="chore-list" class="chore-list"></div>
     <section id="done-today" class="done-today hidden">
@@ -102,6 +102,15 @@
       <div id="settings-body"></div>
     </section>
   </main>
+
+  <!-- ======== AVATAR PICKER ======== -->
+  <div id="avatar-overlay" class="overlay hidden">
+    <div class="card avatar-card">
+      <h2>Pick your new look!</h2>
+      <div id="avatar-grid" class="avatar-grid"></div>
+      <button type="button" id="avatar-cancel" class="ghost-btn">Cancel</button>
+    </div>
+  </div>
 
   <!-- ======== PIN PAD ======== -->
   <div id="pin-overlay" class="overlay hidden">

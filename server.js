@@ -171,6 +171,17 @@ const routes = {
     return { status: 200, body: { ok: true, value: chore.value, balance: childTotals(child.id).balance } };
   },
 
+  'POST /api/child/avatar': (req, q, body) => {
+    const child = data.children.find(c => c.id === body.childId);
+    if (!child) return { status: 404, body: { error: 'Child not found' } };
+    if (child.pin !== String(body.pin)) return { status: 403, body: { error: 'wrong-pin' } };
+    const emoji = String(body.emoji || '').trim();
+    if (!emoji || emoji.length > 8) return { status: 400, body: { error: 'Pick a valid avatar' } };
+    child.emoji = emoji;
+    saveData();
+    return { status: 200, body: { ok: true, emoji } };
+  },
+
   'POST /api/admin/login': (req, q, body) => {
     if (String(body.pin) !== data.settings.adminPin) return { status: 403, body: { error: 'wrong-pin' } };
     return { status: 200, body: { ok: true } };
