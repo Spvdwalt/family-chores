@@ -112,9 +112,14 @@ const pinPad = (() => {
 // ---------- celebration ----------
 
 function celebrate(childName, value) {
-  $('#celebrate-emoji').textContent = ['🎉','🌟','🏆','🥳','💪'][Math.floor(Math.random() * 5)];
-  $('#celebrate-text').textContent = `Well done, ${childName}!`;
-  $('#celebrate-sub').textContent = `You earned ${money(value)}!`;
+  showCelebration(['🎉','🌟','🏆','🥳','💪'][Math.floor(Math.random() * 5)],
+    `Well done, ${childName}!`, `You earned ${money(value)}!`);
+}
+
+function showCelebration(emoji, title, sub) {
+  $('#celebrate-emoji').textContent = emoji;
+  $('#celebrate-text').textContent = title;
+  $('#celebrate-sub').textContent = sub;
   $('#celebrate').classList.remove('hidden');
 
   const layer = $('#confetti-layer');
@@ -145,13 +150,16 @@ async function loadDashboard() {
     const banner = ch.availableCount > 0
       ? `<span class="chore-banner">✨ ${ch.availableCount} chore${ch.availableCount > 1 ? 's' : ''} waiting!</span>`
       : `<span class="chore-banner all-done">🎉 All done!</span>`;
+    const birthdayPill = ch.isBirthday
+      ? `<div><span class="chore-banner birthday">🎂 Happy birthday — ${ch.age} today!</span></div>` : '';
     return `
       <button class="child-card" data-child="${ch.id}" style="--child-color:${ch.color}">
         <div class="child-top">
-          <div class="child-avatar">${ch.emoji}</div>
+          <div class="child-avatar">${ch.emoji}${ch.isBirthday ? '<span class="party-hat">🎉</span>' : ''}</div>
           <div>
             <div class="child-name">${ch.name}</div>
-            ${banner}
+            ${birthdayPill}
+            <div>${banner}</div>
           </div>
         </div>
         <div class="child-stats">
@@ -529,6 +537,15 @@ function renderSettings() {
         </div>`).join('')}
     </div>
     <div class="settings-group">
+      <h2>Birthdays</h2>
+      <p class="hint">On their birthday they get a party hat and a surprise. 🎂</p>
+      ${admin.children.map(c => `
+        <div class="settings-row">
+          <span class="who-label">${c.emoji} ${c.name}</span>
+          <input type="date" id="setbday-${c.id}" value="${c.birthday}">
+        </div>`).join('')}
+    </div>
+    <div class="settings-group">
       <h2>Children's secret codes</h2>
       <p class="hint">4 digits each — they use these to mark chores done.</p>
       ${admin.children.map(c => `
@@ -573,16 +590,18 @@ function renderSettings() {
   });
 
   $('#btn-save-settings').addEventListener('click', async () => {
-    const childPins = {}, childEmojis = {};
+    const childPins = {}, childEmojis = {}, childBirthdays = {};
     admin.children.forEach(c => {
       childPins[c.id] = $(`#setpin-${c.id}`).value.trim();
       childEmojis[c.id] = $(`#avatars-${c.id} .selected`)?.dataset.avatar || c.emoji;
+      childBirthdays[c.id] = $(`#setbday-${c.id}`).value;
     });
     const newAdminPin = $('#set-adminpin').value.trim();
     try {
       await api('POST', '/api/admin/settings', {
         childPins,
         childEmojis,
+        childBirthdays,
         adminPin: newAdminPin,
         currency: $('#set-currency').value.trim(),
         dailyStartHour: Number($('#set-starthour').value),
@@ -611,4 +630,13 @@ $$('.btn-back').forEach(b => b.addEventListener('click', async () => {
 }));
 
 // kick off
-loadDashboard().catch(() => toast('Could not reach the server', 'error'));
+loadDashboard().then(() => {
+  // birthday fanfare, once per day per device
+  const today = new Date().toDateString();
+  state.children.filter(c => c.isBirthday).forEach((c, i) => {
+    const key = `bday-${c.id}-${today}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+    setTimeout(() => showCelebration('🎂', `Happy birthday, ${c.name}!`, `${c.age} years old today! 🥳`), 600 + i * 2800);
+  });
+}).catch(() => toast('Could not reach the server', 'error'));

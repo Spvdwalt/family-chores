@@ -16,8 +16,8 @@ function defaultData() {
   return {
     settings: { adminPin: '12345', currency: 'R', dailyStartHour: 0 },
     children: [
-      { id: 'luan', name: 'Luan', emoji: '🦁', color: '#FF9F43', pin: '1111' },
-      { id: 'arno', name: 'Arno', emoji: '🐻', color: '#54A0FF', pin: '2222' },
+      { id: 'luan', name: 'Luan', emoji: '🦁', color: '#FF9F43', pin: '1111', birthday: '2019-09-09' },
+      { id: 'arno', name: 'Arno', emoji: '🐻', color: '#54A0FF', pin: '2222', birthday: '2021-10-04' },
     ],
     chores: [
       { id: newId(), name: 'Make your bed', emoji: '🛏️', value: 5, assignedTo: 'each', frequency: 'daily', active: true, enabled: true },
@@ -43,6 +43,16 @@ function loadData() {
     data = defaultData();
     saveData();
   }
+  // fill in birthdays for data files created before the birthday feature
+  const knownBirthdays = { luan: '2019-09-09', arno: '2021-10-04' };
+  let patched = false;
+  for (const child of data.children) {
+    if (!child.birthday && knownBirthdays[child.id]) {
+      child.birthday = knownBirthdays[child.id];
+      patched = true;
+    }
+  }
+  if (patched) saveData();
 }
 
 function saveData() {
@@ -110,6 +120,12 @@ function childTotals(childId) {
 
 // ---------- API ----------
 
+function isBirthdayToday(birthday, now) {
+  if (!birthday) return false;
+  const [, m, d] = birthday.split('-').map(Number);
+  return now.getMonth() + 1 === m && now.getDate() === d;
+}
+
 function publicState() {
   const now = new Date();
   return {
@@ -119,6 +135,8 @@ function publicState() {
       name: ch.name,
       emoji: ch.emoji,
       color: ch.color,
+      isBirthday: isBirthdayToday(ch.birthday, now),
+      age: ch.birthday ? now.getFullYear() - Number(ch.birthday.split('-')[0]) : null,
       ...childTotals(ch.id),
       availableCount: availableChoresFor(ch.id, now).length,
       doneToday: data.completions
@@ -193,7 +211,7 @@ const routes = {
       status: 200,
       body: {
         settings: { currency: data.settings.currency, dailyStartHour: data.settings.dailyStartHour || 0 },
-        children: data.children.map(c => ({ id: c.id, name: c.name, emoji: c.emoji, pin: c.pin, ...childTotals(c.id) })),
+        children: data.children.map(c => ({ id: c.id, name: c.name, emoji: c.emoji, pin: c.pin, birthday: c.birthday || '', ...childTotals(c.id) })),
         chores: data.chores.filter(c => c.active),
         history: [
           ...data.completions.map(c => ({ kind: 'completion', id: c.id, childId: c.childId, label: `${c.choreEmoji} ${c.choreName}`, amount: c.value, at: c.at })),
@@ -284,6 +302,16 @@ const routes = {
       const cur = String(body.currency).trim();
       if (!cur || cur.length > 3) return { status: 400, body: { error: 'Currency must be 1-3 characters' } };
       data.settings.currency = cur;
+    }
+    if (body.childBirthdays) {
+      for (const [childId, birthday] of Object.entries(body.childBirthdays)) {
+        const b = String(birthday).trim();
+        if (b && (!/^\d{4}-\d{2}-\d{2}$/.test(b) || isNaN(new Date(b).getTime()))) {
+          return { status: 400, body: { error: 'Birthdays must be valid dates' } };
+        }
+        const child = data.children.find(c => c.id === childId);
+        if (child) child.birthday = b;
+      }
     }
     if (body.dailyStartHour !== undefined) {
       const h = Number(body.dailyStartHour);

@@ -74,6 +74,12 @@ body {
   animation: gentle-bounce 2.2s ease-in-out infinite;
 }
 .chore-banner.all-done { background: #e8f9ef; color: #1d8a4e; animation: none; }
+.chore-banner.birthday { background: #fff3d1; color: #a8720a; margin-bottom: 4px; }
+.child-avatar { position: relative; }
+.party-hat {
+  position: absolute; top: -13px; right: -8px; font-size: 1.4rem;
+  transform: rotate(24deg); animation: gentle-bounce 1.4s ease-in-out infinite;
+}
 @keyframes gentle-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
 .child-stats {
