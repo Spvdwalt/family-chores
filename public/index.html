@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Family Chores</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+</head>
+<body>
+
+  <!-- ======== DASHBOARD ======== -->
+  <main id="view-dashboard" class="view">
+    <header class="app-header">
+      <div>
+        <h1>Family Chores <span class="wave">⭐</span></h1>
+        <p id="today-line" class="subtitle"></p>
+      </div>
+      <button id="btn-admin" class="icon-btn" title="Parent zone">⚙️</button>
+    </header>
+    <div id="child-cards" class="child-cards"></div>
+  </main>
+
+  <!-- ======== CHILD CHORE LIST ======== -->
+  <main id="view-chores" class="view hidden">
+    <header class="app-header">
+      <button class="icon-btn btn-back" title="Back">‹</button>
+      <h1 id="chores-title"></h1>
+      <span class="header-spacer"></span>
+    </header>
+    <div id="chore-list" class="chore-list"></div>
+    <section id="done-today" class="done-today hidden">
+      <h2>Done today 🎉</h2>
+      <div id="done-list"></div>
+    </section>
+  </main>
+
+  <!-- ======== ADMIN ======== -->
+  <main id="view-admin" class="view hidden">
+    <header class="app-header">
+      <button class="icon-btn btn-back" title="Back">‹</button>
+      <h1>Parent Zone</h1>
+      <span class="header-spacer"></span>
+    </header>
+    <nav class="tabs">
+      <button class="tab active" data-tab="chores">Chores</button>
+      <button class="tab" data-tab="payday">Pay Day</button>
+      <button class="tab" data-tab="history">History</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <section id="tab-chores" class="tab-panel">
+      <div id="admin-chore-list"></div>
+      <div id="add-row" class="add-row">
+        <button id="btn-new-chore" class="big-btn">＋ Add a chore</button>
+        <button id="btn-ideas" class="big-btn">💡 Ideas</button>
+      </div>
+      <div id="idea-list" class="idea-list hidden"></div>
+
+      <form id="chore-form" class="card form hidden">
+        <h2 id="chore-form-title">New chore</h2>
+        <input type="hidden" id="cf-id">
+        <label>What needs doing?
+          <input id="cf-name" type="text" placeholder="e.g. Feed the dog" maxlength="40" required>
+        </label>
+        <label>Pick an icon</label>
+        <div id="cf-emoji-row" class="emoji-row"></div>
+        <label>Worth
+          <div class="value-row"><span id="cf-currency" class="currency"></span>
+            <input id="cf-value" type="number" min="1" step="1" placeholder="5" required>
+          </div>
+        </label>
+        <label>Who can do it?</label>
+        <div id="cf-assigned" class="pill-row"></div>
+        <label>How often?</label>
+        <div id="cf-frequency" class="pill-row">
+          <button type="button" class="pill" data-val="daily">Every day</button>
+          <button type="button" class="pill" data-val="weekly">Once a week</button>
+          <button type="button" class="pill" data-val="once">Once-off</button>
+          <button type="button" class="pill" data-val="custom">Custom…</button>
+        </div>
+        <div id="cf-custom-days" class="custom-days-row hidden">
+          Every <input id="cf-everydays" type="number" inputmode="numeric" min="2" max="365" placeholder="3"> days
+        </div>
+        <p id="cf-error" class="form-error hidden"></p>
+        <div class="form-actions">
+          <button type="button" id="cf-cancel" class="ghost-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save chore</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="tab-payday" class="tab-panel hidden">
+      <div id="payday-cards"></div>
+    </section>
+
+    <section id="tab-history" class="tab-panel hidden">
+      <div id="history-list"></div>
+    </section>
+
+    <section id="tab-settings" class="tab-panel hidden">
+      <div id="settings-body"></div>
+    </section>
+  </main>
+
+  <!-- ======== PIN PAD ======== -->
+  <div id="pin-overlay" class="overlay hidden">
+    <div class="pin-card card">
+      <div id="pin-avatar" class="pin-avatar"></div>
+      <h2 id="pin-title">Enter your secret code</h2>
+      <div id="pin-dots" class="pin-dots"></div>
+      <div class="keypad">
+        <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+        <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+        <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+        <button data-key="cancel" class="key-muted">✕</button><button data-key="0">0</button><button data-key="back" class="key-muted">⌫</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== CELEBRATION ======== -->
+  <div id="celebrate" class="overlay hidden">
+    <div class="celebrate-card">
+      <div class="celebrate-emoji" id="celebrate-emoji">🎉</div>
+      <h2 id="celebrate-text">Well done!</h2>
+      <p id="celebrate-sub"></p>
+    </div>
+  </div>
+  <div id="confetti-layer"></div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

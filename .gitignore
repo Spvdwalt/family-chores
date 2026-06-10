@@ -1,0 +1,6 @@
+# live family data — PINs and history, never commit
+data/
+
+# local tooling
+.claude/
+node_modules/
