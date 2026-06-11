@@ -190,6 +190,13 @@ const routes = {
     return { status: 200, body: { ok: true, value: chore.value, balance: childTotals(child.id).balance } };
   },
 
+  'POST /api/child/verify': (req, q, body) => {
+    const child = data.children.find(c => c.id === body.childId);
+    if (!child) return { status: 404, body: { error: 'Child not found' } };
+    if (child.pin !== String(body.pin)) return { status: 403, body: { error: 'wrong-pin' } };
+    return { status: 200, body: { ok: true } };
+  },
+
   'POST /api/child/avatar': (req, q, body) => {
     const child = data.children.find(c => c.id === body.childId);
     if (!child) return { status: 404, body: { error: 'Child not found' } };

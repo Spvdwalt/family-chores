@@ -385,35 +385,44 @@ function tryComplete(choreId) {
 
 $('#btn-avatar').addEventListener('click', () => {
   if (!currentChild) return;
+  // code first, then the picker — the whole feature sits behind the child's PIN
+  pinPad.open({
+    title: t('enterCode', { name: currentChild.name }),
+    avatar: currentChild.emoji,
+    digits: 4,
+    handler: async pin => {
+      try {
+        await api('POST', '/api/child/verify', { childId: currentChild.id, pin });
+        openAvatarGrid(pin);
+        return true;
+      } catch (err) {
+        if (err.code === 'wrong-pin') return false;
+        toast(trServer(err.message), 'error');
+        return true;
+      }
+    },
+  });
+});
+
+function openAvatarGrid(verifiedPin) {
   $('#avatar-grid').innerHTML = AVATARS.map(a =>
     `<button type="button" data-pick="${a}" class="${currentChild.emoji === a ? 'selected' : ''}">${a}</button>`).join('');
-  $$('#avatar-grid [data-pick]').forEach(b => b.addEventListener('click', () => {
+  $$('#avatar-grid [data-pick]').forEach(b => b.addEventListener('click', async () => {
     const chosen = b.dataset.pick;
     $('#avatar-overlay').classList.add('hidden');
     if (chosen === currentChild.emoji) return;
-    pinPad.open({
-      title: t('enterCode', { name: currentChild.name }),
-      avatar: chosen,
-      digits: 4,
-      handler: async pin => {
-        try {
-          await api('POST', '/api/child/avatar', { childId: currentChild.id, pin, emoji: chosen });
-          currentChild.emoji = chosen;
-          $('#btn-avatar').textContent = chosen;
-          $('#pin-avatar').textContent = chosen;
-          toast(t('lookingGood', { name: currentChild.name, emoji: chosen }), 'success');
-          state = await api('GET', '/api/state');
-          return true;
-        } catch (err) {
-          if (err.code === 'wrong-pin') return false;
-          toast(trServer(err.message), 'error');
-          return true;
-        }
-      },
-    });
+    try {
+      await api('POST', '/api/child/avatar', { childId: currentChild.id, pin: verifiedPin, emoji: chosen });
+      currentChild.emoji = chosen;
+      $('#btn-avatar').textContent = chosen;
+      toast(t('lookingGood', { name: currentChild.name, emoji: chosen }), 'success');
+      state = await api('GET', '/api/state');
+    } catch (err) {
+      toast(trServer(err.message), 'error');
+    }
   }));
   $('#avatar-overlay').classList.remove('hidden');
-});
+}
 $('#avatar-cancel').addEventListener('click', () => $('#avatar-overlay').classList.add('hidden'));
 
 // ---------- admin ----------
