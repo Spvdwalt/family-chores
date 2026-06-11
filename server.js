@@ -394,7 +394,7 @@ const server = http.createServer((req, res) => {
       const result = handler
         ? handler(req, Object.fromEntries(url.searchParams), body)
         : { status: 404, body: { error: 'Not found' } };
-      res.writeHead(result.status, { 'Content-Type': 'application/json' });
+      res.writeHead(result.status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(result.body));
     });
     return;
@@ -406,7 +406,12 @@ const server = http.createServer((req, res) => {
   if (!filePath.startsWith(PUBLIC_DIR)) { res.writeHead(403); res.end(); return; }
   fs.readFile(filePath, (err, content) => {
     if (err) { res.writeHead(404); res.end('Not found'); return; }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
+    // no-cache: browsers (and the HA companion app's WebView) must check with
+    // the server on every load instead of serving a stale copy for days
+    res.writeHead(200, {
+      'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream',
+      'Cache-Control': 'no-cache',
+    });
     res.end(content);
   });
 });

@@ -790,6 +790,14 @@ $$('.btn-back').forEach(b => b.addEventListener('click', async () => {
   show('view-dashboard');
 }));
 
+// keep wall tablets fresh: while the dashboard is just sitting there, re-fetch
+// the scores every 30s so chores done on other devices show up by themselves
+setInterval(() => {
+  const dashboardVisible = !$('#view-dashboard').classList.contains('hidden');
+  const overlayOpen = ['#pin-overlay', '#avatar-overlay', '#celebrate'].some(s => !$(s).classList.contains('hidden'));
+  if (dashboardVisible && !overlayOpen) loadDashboard().catch(() => {});
+}, 30000);
+
 // kick off
 loadDashboard().then(() => {
   // birthday fanfare, once per day per device
