@@ -54,7 +54,11 @@ Open the Parent Zone (⚙️ top-right) → **Settings** to change them.
   it from the kids temporarily without deleting it.
 - **💡 Ideas**: 20 prebuilt chores with suggested prices — tap one to pre-fill the
   form, tweak, and save.
-- **Avatars**: pick each child's face in Settings (lion, bear, dino, unicorn…).
+- **Avatars**: kids tap their own face next to their name (PIN-protected) to change
+  it; parents can also set faces in Settings.
+- **Language**: English or Afrikaans — toggle in Parent Zone → Settings.
+- The Parent Zone asks for the PIN **every time** it's opened — safe on a shared
+  family tablet.
 - **History**: every completion and payout, with an **undo** button in case a chore
   was marked done but the bed mysteriously still looks like a nest.
 - Deleting a chore keeps its history; totals never change retroactively.

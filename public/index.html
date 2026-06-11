@@ -13,7 +13,7 @@
   <main id="view-dashboard" class="view">
     <header class="app-header">
       <div>
-        <h1>Family Chores <span class="wave">⭐</span></h1>
+        <h1><span data-i18n="appTitle">Family Chores</span> <span class="wave">⭐</span></h1>
         <p id="today-line" class="subtitle"></p>
       </div>
       <button id="btn-admin" class="icon-btn" title="Parent zone">⚙️</button>
@@ -25,12 +25,15 @@
   <main id="view-chores" class="view hidden">
     <header class="app-header">
       <button class="icon-btn btn-back" title="Back">‹</button>
-      <h1 id="chores-title"></h1>
-      <button id="btn-avatar" class="icon-btn" title="Change my look"></button>
+      <h1 class="chores-h1">
+        <button id="btn-avatar" class="title-avatar" title="Change my look"></button>
+        <span id="chores-title"></span>
+      </h1>
+      <span class="header-spacer"></span>
     </header>
     <div id="chore-list" class="chore-list"></div>
     <section id="done-today" class="done-today hidden">
-      <h2>Done today 🎉</h2>
+      <h2 data-i18n="doneToday">Done today 🎉</h2>
       <div id="done-list"></div>
     </section>
   </main>
@@ -39,53 +42,55 @@
   <main id="view-admin" class="view hidden">
     <header class="app-header">
       <button class="icon-btn btn-back" title="Back">‹</button>
-      <h1>Parent Zone</h1>
+      <h1 data-i18n="parentZone">Parent Zone</h1>
       <span class="header-spacer"></span>
     </header>
     <nav class="tabs">
-      <button class="tab active" data-tab="chores">Chores</button>
-      <button class="tab" data-tab="payday">Pay Day</button>
-      <button class="tab" data-tab="history">History</button>
-      <button class="tab" data-tab="settings">Settings</button>
+      <button class="tab active" data-tab="chores" data-i18n="tabChores">Chores</button>
+      <button class="tab" data-tab="payday" data-i18n="tabPayday">Pay Day</button>
+      <button class="tab" data-tab="history" data-i18n="tabHistory">History</button>
+      <button class="tab" data-tab="settings" data-i18n="tabSettings">Settings</button>
     </nav>
 
     <section id="tab-chores" class="tab-panel">
       <div id="admin-chore-list"></div>
       <div id="add-row" class="add-row">
-        <button id="btn-new-chore" class="big-btn">＋ Add a chore</button>
-        <button id="btn-ideas" class="big-btn">💡 Ideas</button>
+        <button id="btn-new-chore" class="big-btn" data-i18n="addChore">＋ Add a chore</button>
+        <button id="btn-ideas" class="big-btn" data-i18n="ideas">💡 Ideas</button>
       </div>
       <div id="idea-list" class="idea-list hidden"></div>
 
       <form id="chore-form" class="card form hidden">
         <h2 id="chore-form-title">New chore</h2>
         <input type="hidden" id="cf-id">
-        <label>What needs doing?
-          <input id="cf-name" type="text" placeholder="e.g. Feed the dog" maxlength="40" required>
+        <label><span data-i18n="cfName">What needs doing?</span>
+          <input id="cf-name" type="text" maxlength="40" required>
         </label>
-        <label>Pick an icon</label>
+        <label data-i18n="cfIcon">Pick an icon</label>
         <div id="cf-emoji-row" class="emoji-row"></div>
-        <label>Worth
+        <label><span data-i18n="cfWorth">Worth</span>
           <div class="value-row"><span id="cf-currency" class="currency"></span>
             <input id="cf-value" type="number" min="1" step="1" placeholder="5" required>
           </div>
         </label>
-        <label>Who can do it?</label>
+        <label data-i18n="cfWho">Who can do it?</label>
         <div id="cf-assigned" class="pill-row"></div>
-        <label>How often?</label>
+        <label data-i18n="cfHowOften">How often?</label>
         <div id="cf-frequency" class="pill-row">
-          <button type="button" class="pill" data-val="daily">Every day</button>
-          <button type="button" class="pill" data-val="weekly">Once a week</button>
-          <button type="button" class="pill" data-val="once">Once-off</button>
-          <button type="button" class="pill" data-val="custom">Custom…</button>
+          <button type="button" class="pill" data-val="daily" data-i18n="freqDaily">Every day</button>
+          <button type="button" class="pill" data-val="weekly" data-i18n="freqWeekly">Once a week</button>
+          <button type="button" class="pill" data-val="once" data-i18n="freqOnce">Once-off</button>
+          <button type="button" class="pill" data-val="custom" data-i18n="custom">Custom…</button>
         </div>
         <div id="cf-custom-days" class="custom-days-row hidden">
-          Every <input id="cf-everydays" type="number" inputmode="numeric" min="2" max="365" placeholder="3"> days
+          <span data-i18n="every">Every</span>
+          <input id="cf-everydays" type="number" inputmode="numeric" min="2" max="365" placeholder="3">
+          <span data-i18n="days">days</span>
         </div>
         <p id="cf-error" class="form-error hidden"></p>
         <div class="form-actions">
-          <button type="button" id="cf-cancel" class="ghost-btn">Cancel</button>
-          <button type="submit" class="primary-btn">Save chore</button>
+          <button type="button" id="cf-cancel" class="ghost-btn" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="primary-btn" data-i18n="saveChore">Save chore</button>
         </div>
       </form>
     </section>
@@ -106,9 +111,9 @@
   <!-- ======== AVATAR PICKER ======== -->
   <div id="avatar-overlay" class="overlay hidden">
     <div class="card avatar-card">
-      <h2>Pick your new look!</h2>
+      <h2 data-i18n="pickLook">Pick your new look!</h2>
       <div id="avatar-grid" class="avatar-grid"></div>
-      <button type="button" id="avatar-cancel" class="ghost-btn">Cancel</button>
+      <button type="button" id="avatar-cancel" class="ghost-btn" data-i18n="cancel">Cancel</button>
     </div>
   </div>
 

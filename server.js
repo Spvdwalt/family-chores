@@ -14,7 +14,7 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 
 function defaultData() {
   return {
-    settings: { adminPin: '12345', currency: 'R', dailyStartHour: 0 },
+    settings: { adminPin: '12345', currency: 'R', dailyStartHour: 0, language: 'en' },
     children: [
       { id: 'luan', name: 'Luan', emoji: '🦁', color: '#FF9F43', pin: '1111', birthday: '2019-09-09' },
       { id: 'arno', name: 'Arno', emoji: '🐻', color: '#54A0FF', pin: '2222', birthday: '2021-10-04' },
@@ -130,6 +130,7 @@ function publicState() {
   const now = new Date();
   return {
     currency: data.settings.currency,
+    language: data.settings.language || 'en',
     children: data.children.map(ch => ({
       id: ch.id,
       name: ch.name,
@@ -210,7 +211,7 @@ const routes = {
     return {
       status: 200,
       body: {
-        settings: { currency: data.settings.currency, dailyStartHour: data.settings.dailyStartHour || 0 },
+        settings: { currency: data.settings.currency, dailyStartHour: data.settings.dailyStartHour || 0, language: data.settings.language || 'en' },
         children: data.children.map(c => ({ id: c.id, name: c.name, emoji: c.emoji, pin: c.pin, birthday: c.birthday || '', ...childTotals(c.id) })),
         chores: data.chores.filter(c => c.active),
         history: [
@@ -312,6 +313,10 @@ const routes = {
         const child = data.children.find(c => c.id === childId);
         if (child) child.birthday = b;
       }
+    }
+    if (body.language !== undefined) {
+      if (!['en', 'af'].includes(body.language)) return { status: 400, body: { error: 'Unknown language' } };
+      data.settings.language = body.language;
     }
     if (body.dailyStartHour !== undefined) {
       const h = Number(body.dailyStartHour);

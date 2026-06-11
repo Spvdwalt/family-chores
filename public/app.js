@@ -5,35 +5,175 @@ const $$ = sel => [...document.querySelectorAll(sel)];
 
 let state = null;            // dashboard state from /api/state
 let currentChild = null;     // child whose chore list is open
-let adminPin = sessionStorage.getItem('adminPin') || null;
+let adminPin = null;         // held in memory only while the Parent Zone is open
+let LANG = 'en';
+
+// ---------- translations ----------
+
+const STR = {
+  en: {
+    appTitle: 'Family Chores',
+    allDone: '🎉 All done!',
+    waiting: v => `✨ ${v.n} chore${v.n > 1 ? 's' : ''} waiting!`,
+    pocket: 'Pocket', earned: 'Earned', paidOut: 'Paid out',
+    choresTitle: v => `${v.name}'s chores`,
+    freqDaily: 'Every day', freqWeekly: 'Once a week', freqOnce: 'Once-off',
+    freqCustom: v => `Every ${v.n} days`, custom: 'Custom…', every: 'Every', days: 'days',
+    firstOneWins: 'first one wins!',
+    emptyTitle: 'All done for now!', emptySub: 'Check back later for more chores.',
+    doneToday: 'Done today 🎉',
+    enterCode: v => `${v.name}, enter your secret code`,
+    parentsOnly: 'Parents only — enter PIN',
+    wellDone: v => `Well done, ${v.name}!`, youEarned: v => `You earned ${v.amount}!`,
+    justDone: 'Oops — that one was just done!',
+    serverError: 'Could not reach the server',
+    parentZone: 'Parent Zone',
+    tabChores: 'Chores', tabPayday: 'Pay Day', tabHistory: 'History', tabSettings: 'Settings',
+    addChore: '＋ Add a chore', ideas: '💡 Ideas',
+    newChore: 'New chore', editChore: 'Edit chore',
+    cfName: 'What needs doing?', cfNamePh: 'e.g. Feed the dog', cfIcon: 'Pick an icon',
+    cfWorth: 'Worth', cfWho: 'Who can do it?', cfHowOften: 'How often?',
+    cancel: 'Cancel', saveChore: 'Save chore',
+    onlyName: v => `Only ${v.name}`, bothEach: 'Both (own chore each)', anyone: 'Anyone (first one wins)',
+    choreSaved: 'Chore saved!', choreRemoved: 'Chore removed',
+    removeConfirm: v => `Remove "${v.name}"? Past completions stay in history.`,
+    choreOn: 'Chore switched on', chorePaused: 'Chore paused',
+    noChoresYet: 'No chores yet — add the first one!',
+    inPocket: 'In pocket', payAll: 'Pay all', pay: 'Pay 💰', amount: 'Amount',
+    enterAmount: 'Enter an amount first',
+    paidTo: v => `Paid ${v.amount} to ${v.name}`,
+    overpayConfirm: v => `That's more than ${v.name} has in pocket (${v.amount}). Pay anyway?`,
+    payDayLabel: '💰 Pay day',
+    historyEmpty: 'Nothing here yet.',
+    undoConfirm: 'Undo this entry? The amounts will be adjusted.', undone: 'Undone',
+    avatarsHead: 'Avatars', avatarsHint: 'Pick a face for each child.',
+    birthdaysHead: 'Birthdays', birthdaysHint: 'On their birthday they get a party hat and a surprise. 🎂',
+    codesHead: "Children's secret codes", codesHint: '4 digits each — they use these to mark chores done.',
+    pinHead: 'Parent PIN', pinHint: '5 digits — protects this Parent Zone.',
+    timeHead: 'Daily chore time', timeHint: 'When do daily chores appear each morning? They always expire at midnight.',
+    appearAt: 'Appear at', midnight: 'Midnight',
+    currencyHead: 'Currency symbol', symbol: 'Symbol',
+    languageHead: 'Language',
+    saveSettings: 'Save settings', settingsSaved: 'Settings saved!',
+    pickLook: 'Pick your new look!',
+    lookingGood: v => `Looking good, ${v.name}! ${v.emoji}`,
+    happyBirthday: v => `Happy birthday, ${v.name}!`,
+    yearsToday: v => `${v.age} years old today! 🥳`,
+    birthdayPill: v => `🎂 Happy birthday — ${v.age} today!`,
+  },
+  af: {
+    appTitle: 'Gesinstakies',
+    allDone: '🎉 Alles klaar!',
+    waiting: v => `✨ ${v.n} takie${v.n > 1 ? 's' : ''} wag!`,
+    pocket: 'Beursie', earned: 'Verdien', paidOut: 'Uitbetaal',
+    choresTitle: v => `${v.name} se takies`,
+    freqDaily: 'Elke dag', freqWeekly: "Een keer 'n week", freqOnce: 'Eenmalig',
+    freqCustom: v => `Elke ${v.n} dae`, custom: 'Eie keuse…', every: 'Elke', days: 'dae',
+    firstOneWins: 'eerste een wen!',
+    emptyTitle: 'Alles klaar vir nou!', emptySub: 'Kom kyk later weer vir nuwe takies.',
+    doneToday: 'Vandag gedoen 🎉',
+    enterCode: v => `${v.name}, sleutel jou geheime kode in`,
+    parentsOnly: 'Net ouers — sleutel PIN in',
+    wellDone: v => `Mooi so, ${v.name}!`, youEarned: v => `Jy het ${v.amount} verdien!`,
+    justDone: 'Oeps — daai een is nou net gedoen!',
+    serverError: 'Kon nie die bediener bereik nie',
+    parentZone: 'Ouersone',
+    tabChores: 'Takies', tabPayday: 'Betaaldag', tabHistory: 'Geskiedenis', tabSettings: 'Instellings',
+    addChore: "＋ Voeg 'n takie by", ideas: '💡 Idees',
+    newChore: 'Nuwe takie', editChore: 'Wysig takie',
+    cfName: 'Wat moet gedoen word?', cfNamePh: 'bv. Voer die hond', cfIcon: "Kies 'n prentjie",
+    cfWorth: 'Werd', cfWho: 'Wie kan dit doen?', cfHowOften: 'Hoe gereeld?',
+    cancel: 'Kanselleer', saveChore: 'Stoor takie',
+    onlyName: v => `Net ${v.name}`, bothEach: 'Albei (elkeen sy eie)', anyone: 'Enigiemand (eerste een wen)',
+    choreSaved: 'Takie gestoor!', choreRemoved: 'Takie verwyder',
+    removeConfirm: v => `Verwyder "${v.name}"? Die geskiedenis bly behoue.`,
+    choreOn: 'Takie aangeskakel', chorePaused: 'Takie afgeskakel',
+    noChoresYet: "Nog geen takies nie — voeg die eerste een by!",
+    inPocket: 'In beursie', payAll: 'Betaal alles', pay: 'Betaal 💰', amount: 'Bedrag',
+    enterAmount: "Sleutel eers 'n bedrag in",
+    paidTo: v => `${v.amount} aan ${v.name} betaal`,
+    overpayConfirm: v => `Dis meer as wat ${v.name} in die beursie het (${v.amount}). Betaal in elk geval?`,
+    payDayLabel: '💰 Betaaldag',
+    historyEmpty: 'Nog niks hier nie.',
+    undoConfirm: 'Ontdoen hierdie inskrywing? Die bedrae sal aangepas word.', undone: 'Ontdoen',
+    avatarsHead: 'Prentjies', avatarsHint: "Kies 'n gesiggie vir elke kind.",
+    birthdaysHead: 'Verjaarsdae', birthdaysHint: "Op hul verjaarsdag kry hulle 'n partytjiehoed en 'n verrassing. 🎂",
+    codesHead: 'Kinders se geheime kodes', codesHint: '4 syfers elk — hulle gebruik dit om takies klaar te merk.',
+    pinHead: 'Ouer PIN', pinHint: '5 syfers — beskerm hierdie Ouersone.',
+    timeHead: 'Daaglikse takie-tyd', timeHint: 'Wanneer verskyn daaglikse takies elke oggend? Hulle verval altyd om middernag.',
+    appearAt: 'Verskyn om', midnight: 'Middernag',
+    currencyHead: 'Geldeenheid-simbool', symbol: 'Simbool',
+    languageHead: 'Taal',
+    saveSettings: 'Stoor instellings', settingsSaved: 'Instellings gestoor!',
+    pickLook: 'Kies jou nuwe gesiggie!',
+    lookingGood: v => `Lyk goed, ${v.name}! ${v.emoji}`,
+    happyBirthday: v => `Veels geluk, ${v.name}!`,
+    yearsToday: v => `${v.age} jaar oud vandag! 🥳`,
+    birthdayPill: v => `🎂 Veels geluk — ${v.age} vandag!`,
+  },
+};
+
+// server validation messages worth translating
+const SERVER_MSG_AF = {
+  'Chore needs a name': "Die takie het 'n naam nodig",
+  'Value must be more than 0': 'Waarde moet meer as 0 wees',
+  'Pick who can do it': 'Kies wie dit kan doen',
+  'Pick a frequency': 'Kies hoe gereeld',
+  'Custom days must be a whole number from 2 to 365': "Eie dae moet 'n heelgetal van 2 tot 365 wees",
+  'Amount must be more than 0': 'Bedrag moet meer as 0 wees',
+  'Parent PIN must be exactly 5 digits': 'Ouer PIN moet presies 5 syfers wees',
+  'Child codes must be exactly 4 digits': 'Kinderkodes moet presies 4 syfers wees',
+  'Each child needs a different code': "Elke kind het 'n ander kode nodig",
+  'Currency must be 1-3 characters': 'Geldeenheid moet 1-3 karakters wees',
+  'Birthdays must be valid dates': 'Verjaarsdae moet geldige datums wees',
+  'Pick a valid avatar': "Kies 'n geldige prentjie",
+};
+
+function t(key, vars) {
+  const s = STR[LANG][key] ?? STR.en[key] ?? key;
+  return typeof s === 'function' ? s(vars || {}) : s;
+}
+function trServer(msg) {
+  return LANG === 'af' ? (SERVER_MSG_AF[msg] || msg) : msg;
+}
+function locale() { return LANG === 'af' ? 'af-ZA' : undefined; }
+
+function applyStatic() {
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $('#cf-name').placeholder = t('cfNamePh');
+  document.title = t('appTitle');
+}
+
+// ---------- catalogues ----------
 
 const EMOJIS = ['⭐','🛏️','🧸','🧹','🍽️','🥣','🐕','🐈','🌿','🏊','🗑️','👕','📚','🧺','🪥','⚽','🚿','🧽','🥕','🚗','🛒','🧦','🪟','🍞'];
 const AVATARS = ['🦁','🐻','🐯','🦊','🐵','🐶','🐱','🐼','🐨','🦖','🦄','🐸','🐧','🦅','🐬','🚀','⚽','🌟'];
 const CHORE_IDEAS = [
-  { name: 'Pack the dishwasher', emoji: '🍽️', value: 5, frequency: 'daily' },
-  { name: 'Take dishes to the kitchen', emoji: '🥣', value: 3, frequency: 'daily' },
-  { name: 'Make your bed', emoji: '🛏️', value: 5, frequency: 'daily' },
-  { name: 'Tidy up your toys', emoji: '🧸', value: 5, frequency: 'daily' },
-  { name: 'Take out the rubbish', emoji: '🗑️', value: 5, frequency: 'daily' },
-  { name: 'Feed the pets', emoji: '🐕', value: 5, frequency: 'daily' },
-  { name: 'Dirty clothes in the basket', emoji: '👕', value: 3, frequency: 'daily' },
-  { name: 'Help fold the washing', emoji: '🧺', value: 8, frequency: 'weekly' },
-  { name: 'Water the plants', emoji: '🌿', value: 5, frequency: 'weekly' },
-  { name: 'Sweep the pool', emoji: '🏊', value: 20, frequency: 'weekly' },
-  { name: 'Help wash the car', emoji: '🚗', value: 15, frequency: 'weekly' },
-  { name: 'Sweep the kitchen floor', emoji: '🧹', value: 8, frequency: 'daily' },
-  { name: 'Wipe the table after dinner', emoji: '🪟', value: 3, frequency: 'daily' },
-  { name: 'Pack away your school bag', emoji: '📚', value: 3, frequency: 'daily' },
-  { name: 'Help unpack the groceries', emoji: '🛒', value: 5, frequency: 'weekly' },
-  { name: 'Match the socks', emoji: '🧦', value: 5, frequency: 'weekly' },
-  { name: 'Brush teeth without being asked', emoji: '🪥', value: 2, frequency: 'daily' },
-  { name: 'Hang up your towel', emoji: '🚿', value: 2, frequency: 'daily' },
-  { name: 'Pack away outside toys', emoji: '⚽', value: 5, frequency: 'daily' },
-  { name: 'Help make breakfast', emoji: '🍞', value: 5, frequency: 'weekly' },
+  { name: { en: 'Pack the dishwasher', af: 'Pak die skottelgoedwasser' }, emoji: '🍽️', value: 5, frequency: 'daily' },
+  { name: { en: 'Take dishes to the kitchen', af: 'Vat skottelgoed kombuis toe' }, emoji: '🥣', value: 3, frequency: 'daily' },
+  { name: { en: 'Make your bed', af: 'Maak jou bed op' }, emoji: '🛏️', value: 5, frequency: 'daily' },
+  { name: { en: 'Tidy up your toys', af: 'Ruim jou speelgoed op' }, emoji: '🧸', value: 5, frequency: 'daily' },
+  { name: { en: 'Take out the rubbish', af: 'Vat die vullis uit' }, emoji: '🗑️', value: 5, frequency: 'daily' },
+  { name: { en: 'Feed the pets', af: 'Voer die troeteldiere' }, emoji: '🐕', value: 5, frequency: 'daily' },
+  { name: { en: 'Dirty clothes in the basket', af: 'Vuil klere in die wasgoedmandjie' }, emoji: '👕', value: 3, frequency: 'daily' },
+  { name: { en: 'Help fold the washing', af: 'Help wasgoed vou' }, emoji: '🧺', value: 8, frequency: 'weekly' },
+  { name: { en: 'Water the plants', af: 'Gee die plante water' }, emoji: '🌿', value: 5, frequency: 'weekly' },
+  { name: { en: 'Sweep the pool', af: 'Vee die swembad' }, emoji: '🏊', value: 20, frequency: 'weekly' },
+  { name: { en: 'Help wash the car', af: 'Help die kar was' }, emoji: '🚗', value: 15, frequency: 'weekly' },
+  { name: { en: 'Sweep the kitchen floor', af: 'Vee die kombuisvloer' }, emoji: '🧹', value: 8, frequency: 'daily' },
+  { name: { en: 'Wipe the table after dinner', af: 'Vee die tafel af na ete' }, emoji: '🪟', value: 3, frequency: 'daily' },
+  { name: { en: 'Pack away your school bag', af: 'Pak jou skooltas weg' }, emoji: '📚', value: 3, frequency: 'daily' },
+  { name: { en: 'Help unpack the groceries', af: 'Help die kruideniersware uitpak' }, emoji: '🛒', value: 5, frequency: 'weekly' },
+  { name: { en: 'Match the socks', af: 'Pas die sokkies bymekaar' }, emoji: '🧦', value: 5, frequency: 'weekly' },
+  { name: { en: 'Brush teeth without being asked', af: 'Borsel tande sonder om gevra te word' }, emoji: '🪥', value: 2, frequency: 'daily' },
+  { name: { en: 'Hang up your towel', af: 'Hang jou handdoek op' }, emoji: '🚿', value: 2, frequency: 'daily' },
+  { name: { en: 'Pack away outside toys', af: 'Pak buite-speelgoed weg' }, emoji: '⚽', value: 5, frequency: 'daily' },
+  { name: { en: 'Help make breakfast', af: 'Help ontbyt maak' }, emoji: '🍞', value: 5, frequency: 'weekly' },
 ];
-const FREQ_LABEL = { daily: 'Every day', weekly: 'Once a week', once: 'Once-off' };
+
 function freqLabel(ch) {
-  return ch.frequency === 'custom' ? `Every ${ch.everyDays} days` : FREQ_LABEL[ch.frequency];
+  if (ch.frequency === 'custom') return t('freqCustom', { n: ch.everyDays });
+  return t({ daily: 'freqDaily', weekly: 'freqWeekly', once: 'freqOnce' }[ch.frequency]);
 }
 
 // ---------- tiny helpers ----------
@@ -61,11 +201,11 @@ function show(viewId) {
 
 let toastTimer;
 function toast(msg, kind = '') {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.className = `toast ${kind}`;
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = `toast ${kind}`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
 }
 
 // ---------- PIN pad ----------
@@ -113,7 +253,7 @@ const pinPad = (() => {
 
 function celebrate(childName, value) {
   showCelebration(['🎉','🌟','🏆','🥳','💪'][Math.floor(Math.random() * 5)],
-    `Well done, ${childName}!`, `You earned ${money(value)}!`);
+    t('wellDone', { name: childName }), t('youEarned', { amount: money(value) }));
 }
 
 function showCelebration(emoji, title, sub) {
@@ -143,15 +283,17 @@ $('#celebrate').addEventListener('click', () => $('#celebrate').classList.add('h
 
 async function loadDashboard() {
   state = await api('GET', '/api/state');
-  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-  $('#today-line').textContent = today;
+  LANG = state.language || 'en';
+  applyStatic();
+  $('#today-line').textContent =
+    new Date().toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
 
   $('#child-cards').innerHTML = state.children.map(ch => {
     const banner = ch.availableCount > 0
-      ? `<span class="chore-banner">✨ ${ch.availableCount} chore${ch.availableCount > 1 ? 's' : ''} waiting!</span>`
-      : `<span class="chore-banner all-done">🎉 All done!</span>`;
+      ? `<span class="chore-banner">${t('waiting', { n: ch.availableCount })}</span>`
+      : `<span class="chore-banner all-done">${t('allDone')}</span>`;
     const birthdayPill = ch.isBirthday
-      ? `<div><span class="chore-banner birthday">🎂 Happy birthday — ${ch.age} today!</span></div>` : '';
+      ? `<div><span class="chore-banner birthday">${t('birthdayPill', { age: ch.age })}</span></div>` : '';
     return `
       <button class="child-card" data-child="${ch.id}" style="--child-color:${ch.color}">
         <div class="child-top">
@@ -163,9 +305,9 @@ async function loadDashboard() {
           </div>
         </div>
         <div class="child-stats">
-          <div class="stat pocket"><div class="num">${money(ch.balance)}</div><div class="lbl">Pocket</div></div>
-          <div class="stat"><div class="num">${money(ch.earned)}</div><div class="lbl">Earned</div></div>
-          <div class="stat"><div class="num">${money(ch.paidOut)}</div><div class="lbl">Paid out</div></div>
+          <div class="stat pocket"><div class="num">${money(ch.balance)}</div><div class="lbl">${t('pocket')}</div></div>
+          <div class="stat"><div class="num">${money(ch.earned)}</div><div class="lbl">${t('earned')}</div></div>
+          <div class="stat"><div class="num">${money(ch.paidOut)}</div><div class="lbl">${t('paidOut')}</div></div>
         </div>
       </button>`;
   }).join('');
@@ -179,7 +321,7 @@ async function loadDashboard() {
 async function openChild(childId) {
   currentChild = state.children.find(c => c.id === childId);
   if (!currentChild) return;
-  $('#chores-title').textContent = `${currentChild.emoji} ${currentChild.name}'s chores`;
+  $('#chores-title').textContent = t('choresTitle', { name: currentChild.name });
   $('#btn-avatar').textContent = currentChild.emoji;
   const { chores } = await api('GET', `/api/chores?childId=${childId}`);
 
@@ -187,8 +329,8 @@ async function openChild(childId) {
     $('#chore-list').innerHTML = `
       <div class="empty-state">
         <div class="big">🎉</div>
-        <p><strong>All done for now!</strong></p>
-        <p>Check back later for more chores.</p>
+        <p><strong>${t('emptyTitle')}</strong></p>
+        <p>${t('emptySub')}</p>
       </div>`;
   } else {
     $('#chore-list').innerHTML = chores.map(ch => `
@@ -196,7 +338,7 @@ async function openChild(childId) {
         <div class="chore-emoji">${ch.emoji}</div>
         <div class="chore-info">
           <div class="chore-name">${ch.name}</div>
-          <div class="chore-meta">${freqLabel(ch)}${ch.assignedTo === 'any' ? ' · first one wins!' : ''}</div>
+          <div class="chore-meta">${freqLabel(ch)}${ch.assignedTo === 'any' ? ' · ' + t('firstOneWins') : ''}</div>
         </div>
         <div class="chore-value">+${money(ch.value)}</div>
       </button>`).join('');
@@ -214,7 +356,7 @@ async function openChild(childId) {
 
 function tryComplete(choreId) {
   pinPad.open({
-    title: `${currentChild.name}, enter your secret code`,
+    title: t('enterCode', { name: currentChild.name }),
     avatar: currentChild.emoji,
     digits: 4,
     handler: async pin => {
@@ -227,19 +369,19 @@ function tryComplete(choreId) {
       } catch (err) {
         if (err.code === 'wrong-pin') return false;
         if (err.code === 'already-done') {
-          toast('Oops — that one was just done!', 'error');
+          toast(t('justDone'), 'error');
           await loadDashboard();
           await openChild(currentChild.id);
           return true;
         }
-        toast(err.message, 'error');
+        toast(trServer(err.message), 'error');
         return true;
       }
     },
   });
 }
 
-// ---------- child avatar picker ----------
+// ---------- child avatar picker (tap your face in the title) ----------
 
 $('#btn-avatar').addEventListener('click', () => {
   if (!currentChild) return;
@@ -250,22 +392,21 @@ $('#btn-avatar').addEventListener('click', () => {
     $('#avatar-overlay').classList.add('hidden');
     if (chosen === currentChild.emoji) return;
     pinPad.open({
-      title: `${currentChild.name}, enter your secret code`,
+      title: t('enterCode', { name: currentChild.name }),
       avatar: chosen,
       digits: 4,
       handler: async pin => {
         try {
           await api('POST', '/api/child/avatar', { childId: currentChild.id, pin, emoji: chosen });
           currentChild.emoji = chosen;
-          $('#chores-title').textContent = `${currentChild.emoji} ${currentChild.name}'s chores`;
-          $('#btn-avatar').textContent = currentChild.emoji;
-          $('#pin-avatar').textContent = currentChild.emoji;
-          toast(`Looking good, ${currentChild.name}! ${chosen}`, 'success');
+          $('#btn-avatar').textContent = chosen;
+          $('#pin-avatar').textContent = chosen;
+          toast(t('lookingGood', { name: currentChild.name, emoji: chosen }), 'success');
           state = await api('GET', '/api/state');
           return true;
         } catch (err) {
           if (err.code === 'wrong-pin') return false;
-          toast(err.message, 'error');
+          toast(trServer(err.message), 'error');
           return true;
         }
       },
@@ -277,18 +418,19 @@ $('#avatar-cancel').addEventListener('click', () => $('#avatar-overlay').classLi
 
 // ---------- admin ----------
 
+// the PIN pad opens EVERY time the gear is tapped — the PIN is never stored,
+// so kids on a shared tablet can't walk into the Parent Zone
 $('#btn-admin').addEventListener('click', () => {
-  if (adminPin) { openAdmin(); return; }
+  adminPin = null;
   pinPad.open({
-    title: 'Parents only — enter PIN',
+    title: t('parentsOnly'),
     avatar: '🔒',
     digits: 5,
     handler: async pin => {
       try {
         await api('POST', '/api/admin/login', { pin });
         adminPin = pin;
-        sessionStorage.setItem('adminPin', pin);
-        openAdmin();
+        await openAdmin();
         return true;
       } catch { return false; }
     },
@@ -298,13 +440,7 @@ $('#btn-admin').addEventListener('click', () => {
 let admin = null; // overview payload
 
 async function openAdmin() {
-  try {
-    admin = await api('GET', '/api/admin/overview');
-  } catch {
-    adminPin = null; sessionStorage.removeItem('adminPin');
-    $('#btn-admin').click();
-    return;
-  }
+  admin = await api('GET', '/api/admin/overview');
   renderAdminChores();
   renderPayday();
   renderHistory();
@@ -313,15 +449,15 @@ async function openAdmin() {
 }
 
 $$('.tab').forEach(tab => tab.addEventListener('click', () => {
-  $$('.tab').forEach(t => t.classList.toggle('active', t === tab));
+  $$('.tab').forEach(x => x.classList.toggle('active', x === tab));
   $$('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + tab.dataset.tab));
 }));
 
 function assigneeLabel(assignedTo) {
-  if (assignedTo === 'each') return 'Both (own chore each)';
-  if (assignedTo === 'any') return 'Anyone (first one wins)';
+  if (assignedTo === 'each') return t('bothEach');
+  if (assignedTo === 'any') return t('anyone');
   const ch = admin.children.find(c => c.id === assignedTo);
-  return ch ? `Only ${ch.name}` : assignedTo;
+  return ch ? t('onlyName', { name: ch.name }) : assignedTo;
 }
 
 // --- chores tab ---
@@ -334,7 +470,7 @@ function renderAdminChores() {
         <div class="chore-name">${ch.name} · <span style="color:var(--green)">${money(ch.value)}</span></div>
         <div class="chore-meta">${assigneeLabel(ch.assignedTo)} · ${freqLabel(ch)}</div>
       </div>
-      <label class="switch" title="Switch chore on or off">
+      <label class="switch" title="On / off">
         <input type="checkbox" data-toggle="${ch.id}" ${ch.enabled === false ? '' : 'checked'}>
         <span class="knob"></span>
       </label>
@@ -342,20 +478,20 @@ function renderAdminChores() {
         <button class="mini-btn" data-edit="${ch.id}" title="Edit">✏️</button>
         <button class="mini-btn" data-del="${ch.id}" title="Remove">🗑️</button>
       </div>
-    </div>`).join('') || '<p class="empty-state">No chores yet — add the first one!</p>';
+    </div>`).join('') || `<p class="empty-state">${t('noChoresYet')}</p>`;
 
-  $$('#admin-chore-list [data-toggle]').forEach(t => t.addEventListener('change', async () => {
-    await api('POST', '/api/admin/chores/toggle', { id: t.dataset.toggle, enabled: t.checked });
-    toast(t.checked ? 'Chore switched on' : 'Chore paused', 'success');
+  $$('#admin-chore-list [data-toggle]').forEach(sw => sw.addEventListener('change', async () => {
+    await api('POST', '/api/admin/chores/toggle', { id: sw.dataset.toggle, enabled: sw.checked });
+    toast(sw.checked ? t('choreOn') : t('chorePaused'), 'success');
     await refreshAdmin();
   }));
   $$('#admin-chore-list [data-edit]').forEach(b => b.addEventListener('click', () =>
     openChoreForm(admin.chores.find(c => c.id === b.dataset.edit))));
   $$('#admin-chore-list [data-del]').forEach(b => b.addEventListener('click', async () => {
     const chore = admin.chores.find(c => c.id === b.dataset.del);
-    if (!confirm(`Remove "${chore.name}"? Past completions stay in history.`)) return;
+    if (!confirm(t('removeConfirm', { name: chore.name }))) return;
     await api('DELETE', `/api/admin/chores?id=${b.dataset.del}`);
-    toast('Chore removed', 'success');
+    toast(t('choreRemoved'), 'success');
     await refreshAdmin();
   }));
 }
@@ -364,7 +500,7 @@ function renderAdminChores() {
 // idea template (no .id → prefilled new chore)
 function openChoreForm(chore) {
   const isEdit = !!(chore && chore.id);
-  $('#chore-form-title').textContent = isEdit ? 'Edit chore' : 'New chore';
+  $('#chore-form-title').textContent = isEdit ? t('editChore') : t('newChore');
   $('#cf-id').value = isEdit ? chore.id : '';
   $('#cf-name').value = chore ? chore.name : '';
   $('#cf-value').value = chore ? chore.value : '';
@@ -381,9 +517,9 @@ function openChoreForm(chore) {
   }));
 
   const assignees = [
-    ...admin.children.map(c => ({ val: c.id, label: `Only ${c.name}` })),
-    { val: 'each', label: 'Both (own chore each)' },
-    { val: 'any', label: 'Anyone (first one wins)' },
+    ...admin.children.map(c => ({ val: c.id, label: t('onlyName', { name: c.name }) })),
+    { val: 'each', label: t('bothEach') },
+    { val: 'any', label: t('anyone') },
   ];
   $('#cf-assigned').innerHTML = assignees.map(a =>
     `<button type="button" class="pill ${chore && chore.assignedTo === a.val ? 'selected' : ''}" data-val="${a.val}">${a.label}</button>`).join('');
@@ -427,11 +563,13 @@ $('#btn-ideas').addEventListener('click', () => {
   list.innerHTML = CHORE_IDEAS.map((idea, i) => `
     <button type="button" class="idea-item" data-idea="${i}">
       <span class="idea-emoji">${idea.emoji}</span>
-      <span class="idea-name">${idea.name}<br><span class="idea-freq">${FREQ_LABEL[idea.frequency]}</span></span>
+      <span class="idea-name">${idea.name[LANG] || idea.name.en}<br><span class="idea-freq">${freqLabel(idea)}</span></span>
       <span class="idea-value">${money(idea.value)}</span>
     </button>`).join('');
-  $$('#idea-list .idea-item').forEach(b => b.addEventListener('click', () =>
-    openChoreForm({ ...CHORE_IDEAS[Number(b.dataset.idea)], assignedTo: 'each' })));
+  $$('#idea-list .idea-item').forEach(b => b.addEventListener('click', () => {
+    const idea = CHORE_IDEAS[Number(b.dataset.idea)];
+    openChoreForm({ ...idea, name: idea.name[LANG] || idea.name.en, assignedTo: 'each' });
+  }));
   list.classList.remove('hidden');
 });
 
@@ -448,12 +586,12 @@ $('#chore-form').addEventListener('submit', async e => {
   };
   try {
     await api(body.id ? 'PUT' : 'POST', '/api/admin/chores', body);
-    toast('Chore saved!', 'success');
+    toast(t('choreSaved'), 'success');
     closeChoreForm();
     await refreshAdmin();
   } catch (err) {
     const el = $('#cf-error');
-    el.textContent = err.message;
+    el.textContent = trServer(err.message);
     el.classList.remove('hidden');
   }
 });
@@ -466,12 +604,12 @@ function renderPayday() {
       <div class="payday-top">
         <div class="child-avatar">${ch.emoji}</div>
         <div class="child-name">${ch.name}</div>
-        <div class="payday-owed"><div class="num">${money(ch.balance)}</div><div class="lbl">In pocket</div></div>
+        <div class="payday-owed"><div class="num">${money(ch.balance)}</div><div class="lbl">${t('inPocket')}</div></div>
       </div>
       <div class="payday-row">
-        <input type="number" min="1" step="1" placeholder="Amount" id="pay-${ch.id}">
-        <button class="payall-btn" data-payall="${ch.id}" data-balance="${ch.balance}">Pay all</button>
-        <button class="primary-btn" data-pay="${ch.id}">Pay 💰</button>
+        <input type="number" min="1" step="1" placeholder="${t('amount')}" id="pay-${ch.id}">
+        <button class="payall-btn" data-payall="${ch.id}" data-balance="${ch.balance}">${t('payAll')}</button>
+        <button class="primary-btn" data-pay="${ch.id}">${t('pay')}</button>
       </div>
     </div>`).join('');
 
@@ -482,10 +620,10 @@ function renderPayday() {
     const childId = b.dataset.pay;
     const child = admin.children.find(c => c.id === childId);
     const amount = Number($(`#pay-${childId}`).value);
-    if (!amount || amount <= 0) { toast('Enter an amount first', 'error'); return; }
-    if (amount > child.balance && !confirm(`That's more than ${child.name} has in pocket (${money(child.balance)}). Pay anyway?`)) return;
+    if (!amount || amount <= 0) { toast(t('enterAmount'), 'error'); return; }
+    if (amount > child.balance && !confirm(t('overpayConfirm', { name: child.name, amount: money(child.balance) }))) return;
     await api('POST', '/api/admin/payout', { childId, amount });
-    toast(`Paid ${money(amount)} to ${child.name}`, 'success');
+    toast(t('paidTo', { amount: money(amount), name: child.name }), 'success');
     await refreshAdmin();
   }));
 }
@@ -494,17 +632,18 @@ function renderPayday() {
 
 function renderHistory() {
   if (admin.history.length === 0) {
-    $('#history-list').innerHTML = '<div class="empty-state"><div class="big">📜</div><p>Nothing here yet.</p></div>';
+    $('#history-list').innerHTML = `<div class="empty-state"><div class="big">📜</div><p>${t('historyEmpty')}</p></div>`;
     return;
   }
   $('#history-list').innerHTML = admin.history.map(h => {
     const child = admin.children.find(c => c.id === h.childId);
-    const when = new Date(h.at).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const when = new Date(h.at).toLocaleString(locale(), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const label = h.kind === 'payout' ? t('payDayLabel') : h.label;
     return `
       <div class="history-item">
         <span class="who">${child ? child.emoji : '❓'}</span>
         <div class="what">
-          <div class="lbl">${child ? child.name : '?'} · ${h.label}</div>
+          <div class="lbl">${child ? child.name : '?'} · ${label}</div>
           <div class="when">${when}</div>
         </div>
         <span class="amt ${h.amount >= 0 ? 'pos' : 'neg'}">${h.amount >= 0 ? '+' : '−'}${money(Math.abs(h.amount))}</span>
@@ -513,9 +652,9 @@ function renderHistory() {
   }).join('');
 
   $$('#history-list [data-undo-id]').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Undo this entry? The amounts will be adjusted.')) return;
+    if (!confirm(t('undoConfirm'))) return;
     await api('POST', '/api/admin/undo', { kind: b.dataset.undoKind, id: b.dataset.undoId });
-    toast('Undone', 'success');
+    toast(t('undone'), 'success');
     await refreshAdmin();
   }));
 }
@@ -525,8 +664,18 @@ function renderHistory() {
 function renderSettings() {
   $('#settings-body').innerHTML = `
     <div class="settings-group">
-      <h2>Avatars</h2>
-      <p class="hint">Pick a face for each child.</p>
+      <h2>${t('languageHead')}</h2>
+      <div class="settings-row">
+        <span class="who-label">🌍 ${t('languageHead')}</span>
+        <select id="set-language">
+          <option value="en" ${(admin.settings.language || 'en') === 'en' ? 'selected' : ''}>English</option>
+          <option value="af" ${admin.settings.language === 'af' ? 'selected' : ''}>Afrikaans</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-group">
+      <h2>${t('avatarsHead')}</h2>
+      <p class="hint">${t('avatarsHint')}</p>
       ${admin.children.map(c => `
         <div>
           <span class="who-label">${c.name}</span>
@@ -537,8 +686,8 @@ function renderSettings() {
         </div>`).join('')}
     </div>
     <div class="settings-group">
-      <h2>Birthdays</h2>
-      <p class="hint">On their birthday they get a party hat and a surprise. 🎂</p>
+      <h2>${t('birthdaysHead')}</h2>
+      <p class="hint">${t('birthdaysHint')}</p>
       ${admin.children.map(c => `
         <div class="settings-row">
           <span class="who-label">${c.emoji} ${c.name}</span>
@@ -546,8 +695,8 @@ function renderSettings() {
         </div>`).join('')}
     </div>
     <div class="settings-group">
-      <h2>Children's secret codes</h2>
-      <p class="hint">4 digits each — they use these to mark chores done.</p>
+      <h2>${t('codesHead')}</h2>
+      <p class="hint">${t('codesHint')}</p>
       ${admin.children.map(c => `
         <div class="settings-row">
           <span class="who-label">${c.emoji} ${c.name}</span>
@@ -555,32 +704,32 @@ function renderSettings() {
         </div>`).join('')}
     </div>
     <div class="settings-group">
-      <h2>Parent PIN</h2>
-      <p class="hint">5 digits — protects this Parent Zone.</p>
+      <h2>${t('pinHead')}</h2>
+      <p class="hint">${t('pinHint')}</p>
       <div class="settings-row">
         <span class="who-label">🔒 PIN</span>
         <input type="text" inputmode="numeric" maxlength="5" id="set-adminpin" value="${adminPin}">
       </div>
     </div>
     <div class="settings-group">
-      <h2>Daily chore time</h2>
-      <p class="hint">When do daily chores appear each morning? They always expire at midnight.</p>
+      <h2>${t('timeHead')}</h2>
+      <p class="hint">${t('timeHint')}</p>
       <div class="settings-row">
-        <span class="who-label">⏰ Appear at</span>
+        <span class="who-label">⏰ ${t('appearAt')}</span>
         <select id="set-starthour">
-          ${[[0, 'Midnight'], [5, '05:00'], [6, '06:00'], [7, '07:00'], [8, '08:00'], [9, '09:00']].map(([h, label]) =>
+          ${[[0, t('midnight')], [5, '05:00'], [6, '06:00'], [7, '07:00'], [8, '08:00'], [9, '09:00']].map(([h, label]) =>
             `<option value="${h}" ${(admin.settings.dailyStartHour || 0) === h ? 'selected' : ''}>${label}</option>`).join('')}
         </select>
       </div>
     </div>
     <div class="settings-group">
-      <h2>Currency symbol</h2>
+      <h2>${t('currencyHead')}</h2>
       <div class="settings-row">
-        <span class="who-label">💱 Symbol</span>
+        <span class="who-label">💱 ${t('symbol')}</span>
         <input type="text" maxlength="3" id="set-currency" value="${admin.settings.currency}">
       </div>
     </div>
-    <button class="primary-btn" id="btn-save-settings" style="width:100%">Save settings</button>`;
+    <button class="primary-btn" id="btn-save-settings" style="width:100%">${t('saveSettings')}</button>`;
 
   admin.children.forEach(c => {
     $$(`#avatars-${c.id} button`).forEach(b => b.addEventListener('click', () => {
@@ -605,26 +754,29 @@ function renderSettings() {
         adminPin: newAdminPin,
         currency: $('#set-currency').value.trim(),
         dailyStartHour: Number($('#set-starthour').value),
+        language: $('#set-language').value,
       });
       adminPin = newAdminPin;
-      sessionStorage.setItem('adminPin', newAdminPin);
-      toast('Settings saved!', 'success');
-      await refreshAdmin();
       await loadDashboard();
+      await refreshAdmin();
+      toast(t('settingsSaved'), 'success');
     } catch (err) {
-      toast(err.message, 'error');
+      toast(trServer(err.message), 'error');
     }
   });
 }
 
 async function refreshAdmin() {
   state = await api('GET', '/api/state');
+  LANG = state.language || 'en';
+  applyStatic();
   await openAdmin();
 }
 
 // ---------- navigation ----------
 
 $$('.btn-back').forEach(b => b.addEventListener('click', async () => {
+  adminPin = null; // leaving the Parent Zone always locks it again
   await loadDashboard();
   show('view-dashboard');
 }));
@@ -637,6 +789,6 @@ loadDashboard().then(() => {
     const key = `bday-${c.id}-${today}`;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, '1');
-    setTimeout(() => showCelebration('🎂', `Happy birthday, ${c.name}!`, `${c.age} years old today! 🥳`), 600 + i * 2800);
+    setTimeout(() => showCelebration('🎂', t('happyBirthday', { name: c.name }), t('yearsToday', { age: c.age })), 600 + i * 2800);
   });
-}).catch(() => toast('Could not reach the server', 'error'));
+}).catch(() => toast(t('serverError'), 'error'));
