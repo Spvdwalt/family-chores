@@ -184,6 +184,9 @@ function money(n) {
 }
 
 async function api(method, url, body) {
+  // unique timestamp on every read: an aggressive cache (HA companion app's
+  // WebView) can't replay a stored answer to a URL it has never seen before
+  if (method === 'GET') url += (url.includes('?') ? '&' : '?') + '_=' + Date.now();
   const res = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json', ...(adminPin ? { 'x-admin-pin': adminPin } : {}) },
