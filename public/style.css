@@ -340,6 +340,8 @@ body {
 .settings-row input { width: 110px; border: 2px solid #e3e5ee; border-radius: 12px; padding: 9px 12px; font: inherit; text-align: center; }
 .settings-row select { width: 130px; border: 2px solid #e3e5ee; border-radius: 12px; padding: 9px 12px; font: inherit; background: #fafbfe; }
 
+.version-line { text-align: center; color: #c2c5d4; font-size: 0.7rem; margin-top: 26px; }
+
 /* toast */
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);

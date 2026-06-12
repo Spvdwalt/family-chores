@@ -290,6 +290,7 @@ async function loadDashboard() {
   applyStatic();
   $('#today-line').textContent =
     new Date().toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
+  $('#version-line').textContent = state.version || '';
 
   $('#child-cards').innerHTML = state.children.map(ch => {
     const banner = ch.availableCount > 0

@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+const APP_VERSION = 'v3'; // bump on every release — shown in the dashboard footer
+
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data', 'data.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -129,6 +131,7 @@ function isBirthdayToday(birthday, now) {
 function publicState() {
   const now = new Date();
   return {
+    version: APP_VERSION,
     currency: data.settings.currency,
     language: data.settings.language || 'en',
     children: data.children.map(ch => ({
